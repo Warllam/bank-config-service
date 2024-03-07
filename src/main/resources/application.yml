@@ -1,0 +1,40 @@
+# Proprietes de l'application
+spring:
+  application:
+    name: bank-config-service
+    # Activation remontée management dans Eureka
+    config:
+      service-registry:
+        auto-registration:
+          register-management: on
+  cloud:
+    config:
+      server:
+        git:
+          # uri: https://github.com/hialmar/amc_config.git
+          # pour docker configs CT
+          uri: https://github.com/Warllam/bank-config-service.git
+          username: warllam
+          password: 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
+          clone-on-start: true
+
+# Configuration client de l'annuaire
+# Le serveur clients-comptes va s'enregistrer comme un micro-service sur l'annuaire
+eureka:
+  client:
+    serviceUrl:
+      # url d'accès à l'annuaire
+      # SANS DOCKER
+      #  defaultZone: http://localhost:10001/eureka/
+      # AVEC DOCKER
+      defaultZone: http://bnkannuaire:10001/eureka/
+
+# Configuration du log.
+logging:
+  level:
+    org.springframework.web: DEBUG # Choix du niveau de log affiché
+
+
+# Proprietes du serveur d'entreprise
+server:
+  port: 10003   # HTTP (Tomcat) port
