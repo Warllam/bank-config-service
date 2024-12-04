@@ -1,143 +1,117 @@
-﻿# bank-config-service
-Pour gérer un dialogue AEM avec deux tabs, où une tab devient grisée en fonction de l'état d'un champ dans l'autre tab, voici la solution adaptée :
+Pour gérer les champs à vider lorsque vous utilisez des input classiques ou des composants Coral UI comme Coral.RichText, vous pouvez adapter le JavaScript en fonction des types de champs que vous souhaitez cibler. Voici une solution détaillée.
 
 
 ---
 
-Fonctionnalités demandées :
+Étape 1 : Adapter le JavaScript pour input et Coral.RichText
 
-1. Griser Tab 1 si un champ nommé titre2 dans Tab 2 est rempli.
+Voici un script qui gère à la fois les champs input et les champs Coral UI comme Coral.RichText :
 
+(function ($, Granite) {
+    $(document).on("click", ".clear-fields-button-a", function () {
+        // Trouver le FieldSet A
+        const fieldSetA = $(this).closest(".coral-FieldSet, .coral-Form-fieldset");
 
-2. Griser Tab 2 si un champ nommé titre1 dans Tab 1 est rempli.
+        // Parcourir et réinitialiser les champs dans ce FieldSet
+        fieldSetA.find("input, coral-richtext").each(function () {
+            const field = $(this);
 
-
-
-
----
-
-1. CSS pour désactiver les tabs
-
-Ajoutez une classe CSS pour griser les tabs et désactiver leur interaction.
-
-<style>
-    .disabled-tab {
-        pointer-events: none; /* Désactive les clics */
-        opacity: 0.5; /* Grise la tab */
-        cursor: not-allowed; /* Change le curseur */
-    }
-</style>
-
-
----
-
-2. JavaScript pour gérer les interactions
-
-Ajoutez un script qui vérifie l'état des champs titre1 et titre2 et ajuste les tabs en conséquence.
-
-<script>
-    $(document).ready(function () {
-        // Identifiants des tabs et des champs
-        const tab1Selector = '.coral-Tab[value="tab1"]';
-        const tab2Selector = '.coral-Tab[value="tab2"]';
-        const titre1Selector = 'input[name="./titre1"]';
-        const titre2Selector = 'input[name="./titre2"]';
-
-        // Fonction pour griser Tab 1 si Titre 2 est rempli
-        function checkTab1State() {
-            if ($(titre2Selector).val().trim() !== "") {
-                $(tab1Selector).addClass("disabled-tab");
-            } else {
-                $(tab1Selector).removeClass("disabled-tab");
+            // Réinitialiser les champs texte classiques
+            if (field.is("input")) {
+                field.val("");
             }
-        }
 
-        // Fonction pour griser Tab 2 si Titre 1 est rempli
-        function checkTab2State() {
-            if ($(titre1Selector).val().trim() !== "") {
-                $(tab2Selector).addClass("disabled-tab");
-            } else {
-                $(tab2Selector).removeClass("disabled-tab");
+            // Réinitialiser les Coral RichText
+            if (field.is("coral-richtext")) {
+                field[0].value = ""; // Utiliser la propriété native de Coral
             }
-        }
-
-        // Attacher les événements sur les champs
-        $(titre1Selector).on("input", function () {
-            checkTab2State();
         });
 
-        $(titre2Selector).on("input", function () {
-            checkTab1State();
-        });
-
-        // Exécuter la vérification initiale au chargement
-        checkTab1State();
-        checkTab2State();
+        Granite.UI.Foundation.Notification.show("success", "Champs du FieldSet A réinitialisés !");
     });
-</script>
+
+    $(document).on("click", ".clear-fields-button-b", function () {
+        // Trouver le FieldSet B
+        const fieldSetB = $(this).closest(".coral-FieldSet, .coral-Form-fieldset");
+
+        // Parcourir et réinitialiser les champs dans ce FieldSet
+        fieldSetB.find("input, coral-richtext").each(function () {
+            const field = $(this);
+
+            // Réinitialiser les champs texte classiques
+            if (field.is("input")) {
+                field.val("");
+            }
+
+            // Réinitialiser les Coral RichText
+            if (field.is("coral-richtext")) {
+                field[0].value = ""; // Utiliser la propriété native de Coral
+            }
+        });
+
+        Granite.UI.Foundation.Notification.show("success", "Champs du FieldSet B réinitialisés !");
+    });
+})(jQuery, Granite);
 
 
 ---
 
-3. Configuration dans le dialogue
+Étape 2 : Points importants dans le script
 
-Configurez vos tabs et champs dans le dialogue AEM avec les noms spécifiés (titre1 et titre2).
+1. input classique :
 
-<tabs
-    jcr:primaryType="nt:unstructured"
-    sling:resourceType="granite/ui/components/coral/foundation/tabs">
-    <items jcr:primaryType="nt:unstructured">
-        <tab1
-            jcr:primaryType="nt:unstructured"
-            sling:resourceType="granite/ui/components/coral/foundation/container"
-            jcr:title="Tab 1"
-            value="tab1">
-            <items jcr:primaryType="nt:unstructured">
-                <titre1
-                    jcr:primaryType="nt:unstructured"
-                    sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
-                    fieldLabel="Titre 1"
-                    name="./titre1" />
-            </items>
-        </tab1>
-        <tab2
-            jcr:primaryType="nt:unstructured"
-            sling:resourceType="granite/ui/components/coral/foundation/container"
-            jcr:title="Tab 2"
-            value="tab2">
-            <items jcr:primaryType="nt:unstructured">
-                <titre2
-                    jcr:primaryType="nt:unstructured"
-                    sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
-                    fieldLabel="Titre 2"
-                    name="./titre2" />
-            </items>
-        </tab2>
-    </items>
-</tabs>
+Les champs input sont ciblés directement avec field.is("input").
+
+Leur contenu est vidé avec field.val("").
 
 
----
 
-Fonctionnement :
+2. Coral.RichText :
 
-1. Tab 1 devient grisée si le champ titre2 de Tab 2 est rempli (et inversement pour Tab 2).
+Les composants Coral RichText sont détectés avec field.is("coral-richtext").
 
-
-2. La vérification s'effectue à chaque modification du champ correspondant grâce à l'événement input.
+Le contenu est réinitialisé avec field[0].value = "".
 
 
-3. Lors du chargement, le script vérifie déjà les valeurs pour ajuster l'état initial des tabs.
+
+3. Scope limité au FieldSet :
+
+Le bouton agit uniquement sur les champs présents dans le FieldSet parent grâce à .closest().
+
+
+
+4. Notifications utilisateur :
+
+Une notification dynamique informe l'utilisateur des actions effectuées.
+
 
 
 
 
 ---
 
-Résultat attendu :
+Étape 3 : Tester
 
-Si l'utilisateur remplit le champ titre2 dans Tab 2, Tab 1 devient grisée et inaccessible.
-
-Si l'utilisateur remplit le champ titre1 dans Tab 1, Tab 2 devient grisée et inaccessible.
+1. Intégrez ce script dans votre clientlib (par exemple, dans clearFields.js).
 
 
+2. Ajoutez les champs nécessaires (input ou coral-richtext) dans vos FieldSet respectifs.
+
+
+3. Testez les boutons Clear A et Clear B pour vérifier qu'ils vident correctement leurs champs respectifs.
+
+
+
+
+---
+
+Exemple d’un dialogue avec input et Coral.RichText
+
+<content jcr:primaryType="cq:DialogContent">
+  <items jcr:primaryType="cq:WidgetCollection">
+    
+    <!-- Premier FieldSet -->
+    <fieldSetA
+      jcr:primaryType="cq:Widget"
+      xtype="fieldset"
+      title="FieldSet
